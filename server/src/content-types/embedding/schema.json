@@ -1,0 +1,41 @@
+{
+  "kind": "collectionType",
+  "collectionName": "semantic_search_embeddings",
+  "info": {
+    "singularName": "embedding",
+    "pluralName": "embeddings",
+    "displayName": "Semantic Search Embedding"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "content-manager": {
+      "visible": false
+    },
+    "content-type-builder": {
+      "visible": false
+    }
+  },
+  "attributes": {
+    "contentType": {
+      "type": "string",
+      "required": true
+    },
+    "contentDocumentId": {
+      "type": "string",
+      "required": true
+    },
+    "locale": {
+      "type": "string",
+      "default": "en"
+    },
+    "embedding": {
+      "type": "json",
+      "required": true
+    },
+    "embeddingMetadata": {
+      "type": "json"
+    }
+  }
+}
