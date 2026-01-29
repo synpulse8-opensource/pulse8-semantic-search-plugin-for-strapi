@@ -29,12 +29,12 @@ export const Settings: React.FC<ISettingsProps> = ({ apiSettingsHook }) => {
         <Grid.Item col={6}>
           <Box width="100%">
             <Field.Root id="embeddingUrl">
-              <Field.Label>Embedding API URL</Field.Label>
+              <Field.Label>Embedding API base URL (exclude the /embeddings suffix)</Field.Label>
               <Field.Input
                 type="text"
                 name="embeddingUrl"
                 value={embeddingUrl}
-                placeholder="e.g. https://openrouter.ai/api/v1/embeddings"
+                placeholder="e.g. https://openrouter.ai/api/v1"
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmbeddingUrl(e.target.value)}
               />
             </Field.Root>
