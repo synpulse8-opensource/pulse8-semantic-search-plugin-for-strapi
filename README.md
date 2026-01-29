@@ -38,7 +38,8 @@ npm install -g yalc
 In the plugin directory:
 
 ```bash
-# Build the plugin
+npm install
+npm run build
 npm run watch:link
 ```
 
@@ -48,28 +49,16 @@ In your Strapi project directory:
 
 ```bash
 npm install openai
-bunx yalc add strapi-semantic-search && bunx yalc link strapi-semantic-search && bun install
+npx yalc add strapi-semantic-search && npx yalc link strapi-semantic-search && npx install
 ```
 
-#### 4. Enable the plugin
-
-Add to your `config/plugins.ts`:
-
-```typescript
-export default {
-  'semantic-search': {
-    enabled: true,
-  },
-};
-```
-
-#### 5. Restart Strapi
+#### 4. Restart Strapi
 
 ```bash
 npm run develop
 ```
 
-#### 6. Update during development
+#### 5. Update during development
 
 When you make changes to the plugin:
 

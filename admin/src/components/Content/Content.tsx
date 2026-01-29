@@ -89,9 +89,11 @@ export const Content: React.FC<IContentProps> = ({ pluginSettingsHook }) => {
           ) : (
             <Tr>
               <Td colSpan={3}>
-                <Typography variant="delta" textColor="neutral600">
-                  No content types configured
-                </Typography>
+                <Box paddingTop={4} paddingBottom={4}>
+                  <Typography variant="delta" textColor="neutral600">
+                    No content types configured
+                  </Typography>
+                </Box>
               </Td>
             </Tr>
           )}

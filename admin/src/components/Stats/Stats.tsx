@@ -181,9 +181,11 @@ export const Stats: React.FC<IStatsProps> = ({ statsHook }) => {
           ) : (
             <Tr>
               <Td colSpan={5}>
-                <Typography variant="delta" textColor="neutral600">
-                  No content types configured. Add content types in the Collections tab.
-                </Typography>
+                <Box paddingTop={4} paddingBottom={4}>
+                  <Typography variant="delta" textColor="neutral600">
+                    No content types configured. Add content types in the Collections tab.
+                  </Typography>
+                </Box>
               </Td>
             </Tr>
           )}
