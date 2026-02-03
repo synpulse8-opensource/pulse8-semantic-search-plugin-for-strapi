@@ -60,22 +60,24 @@ export const Content: React.FC<IContentProps> = ({ pluginSettingsHook }) => {
             contentTypes.map((ct, index) => (
               <Tr key={index}>
                 <Td>
-                  <Field.Root error={validationErrors[index]?.contentType}>
+                  <Field.Root error={validationErrors[index]?.contentType} hint="The identifier of your colleciton, e.g. api::article.article">
                     <Field.Input
                       value={ct.contentType}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateContentType(index, e.target.value)}
                       placeholder="api::example.example"
                     />
+                    <Field.Hint />
                     <Field.Error />
                   </Field.Root>
                 </Td>
                 <Td>
-                  <Field.Root error={validationErrors[index]?.fields}>
+                  <Field.Root error={validationErrors[index]?.fields} hint="The fields you want to be searchable by the plugin">
                     <Field.Input
                       value={ct.fieldsRaw || ''}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateFields(index, e.target.value)}
                       placeholder="title, description, content"
                     />
+                    <Field.Hint />
                     <Field.Error />
                   </Field.Root>
                 </Td>

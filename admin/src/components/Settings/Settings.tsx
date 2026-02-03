@@ -28,8 +28,8 @@ export const Settings: React.FC<ISettingsProps> = ({ apiSettingsHook }) => {
         </Grid.Item>
         <Grid.Item col={6}>
           <Box width="100%">
-            <Field.Root id="embeddingUrl">
-              <Field.Label>Embedding API base URL (exclude the /embeddings suffix)</Field.Label>
+            <Field.Root id="embeddingUrl" hint="Exclude the /embeddings suffix, e.g. https://openrouter.ai/api/v1">
+              <Field.Label>Embedding API base URL</Field.Label>
               <Field.Input
                 type="text"
                 name="embeddingUrl"
@@ -37,12 +37,13 @@ export const Settings: React.FC<ISettingsProps> = ({ apiSettingsHook }) => {
                 placeholder="e.g. https://openrouter.ai/api/v1"
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmbeddingUrl(e.target.value)}
               />
+              <Field.Hint />
             </Field.Root>
           </Box>
         </Grid.Item>
         <Grid.Item col={6}>
           <Box width="100%">
-            <Field.Root id="embeddingModel">
+            <Field.Root id="embeddingModel" hint="e.g. 'text-embedding-3-large' if using OpenAI, 'openai/text-embedding-3-large' if using Openrouter">
               <Field.Label>Embedding model name</Field.Label>
               <Field.Input
                 type="text"
@@ -51,6 +52,7 @@ export const Settings: React.FC<ISettingsProps> = ({ apiSettingsHook }) => {
                 placeholder="e.g. text-embedding-3-large"
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmbeddingModel(e.target.value)}
               />
+              <Field.Hint />
             </Field.Root>
           </Box>
         </Grid.Item>
