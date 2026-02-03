@@ -12,6 +12,10 @@ AI-powered semantic search for Strapi CMS using embedding models. Search your co
 - **Localization Support**: Generate embeddings per locale
 - **Embedding Management**: View statistics, regenerate, or delete embeddings from the UI
 
+## Notes
+
+- Currently the plugin will **only** generate embeddings for content that is published.
+
 ## Installation
 
 ### From npm (Production)
@@ -79,11 +83,11 @@ Access the plugin settings at **Settings > Semantic Search** in the Strapi admin
 
 Configure your embedding API connection:
 
-| Field | Description | Example |
-|-------|-------------|---------|
-| **API Key** | Your API key (stored encrypted) | `sk-...` |
+| Field                 | Description                     | Example                                                       |
+| --------------------- | ------------------------------- | ------------------------------------------------------------- |
+| **API Key**           | Your API key (stored encrypted) | `sk-...`                                                      |
 | **Embedding API URL** | Base URL for the embeddings API | `https://api.openai.com/v1` or `https://openrouter.ai/api/v1` |
-| **Embedding Model** | The model to use for embeddings | `text-embedding-3-large` or `openai/text-embedding-3-small` |
+| **Embedding Model**   | The model to use for embeddings | `text-embedding-3-large` or `openai/text-embedding-3-small`   |
 
 > **Note**: The API key is encrypted at rest using Strapi's APP_KEYS. The displayed key is masked for security.
 
@@ -95,9 +99,9 @@ Configure which content types to index for semantic search:
 
 Add content types to index:
 
-| Field | Description | Example |
-|-------|-------------|---------|
-| **Content Type** | The Strapi content type UID | `api::article.article` |
+| Field                 | Description                             | Example                       |
+| --------------------- | --------------------------------------- | ----------------------------- |
+| **Content Type**      | The Strapi content type UID             | `api::article.article`        |
 | **Searchable Fields** | Comma-separated list of fields to embed | `title, description, content` |
 
 #### Auto-Generate Embeddings
@@ -108,11 +112,11 @@ Enable the checkbox to automatically generate embeddings when content is created
 
 Set default values for search API calls:
 
-| Field | Description | Default |
-|-------|-------------|---------|
-| **Limit** | Maximum number of results to return | `10` |
-| **Threshold** | Minimum similarity score (0-1) | `0.3` |
-| **Locale** | Default locale for search | `en` |
+| Field         | Description                         | Default |
+| ------------- | ----------------------------------- | ------- |
+| **Limit**     | Maximum number of results to return | `10`    |
+| **Threshold** | Minimum similarity score (0-1)      | `0.3`   |
+| **Locale**    | Default locale for search           | `en`    |
 
 ### Stats Tab
 
@@ -266,12 +270,12 @@ Content-Type: application/json
 
 The similarity score (0-1) indicates how semantically similar the content is to the query:
 
-| Score Range | Relevance | Description |
-|-------------|-----------|-------------|
-| 0.85 - 1.0 | Highly relevant | Direct topic match |
-| 0.75 - 0.85 | Relevant | Related concepts |
+| Score Range | Relevance         | Description           |
+| ----------- | ----------------- | --------------------- |
+| 0.85 - 1.0  | Highly relevant   | Direct topic match    |
+| 0.75 - 0.85 | Relevant          | Related concepts      |
 | 0.65 - 0.75 | Somewhat relevant | Tangential connection |
-| Below 0.65 | Low relevance | Weak or no connection |
+| Below 0.65  | Low relevance     | Weak or no connection |
 
 Adjust the `threshold` parameter based on your use case. Lower values return more results but may include less relevant content.
 
@@ -303,3 +307,13 @@ Adjust the `threshold` parameter based on your use case. Lower values return mor
 2. **Rebuild the plugin**: `npm run build` in plugin directory
 3. **Clear Strapi cache**: Delete `.cache` and `build` folders
 4. **Restart Strapi**: `npm run develop`
+
+## Contributing
+
+Thank you for your interest in contributing to the semantic search plugin! This plugin is created and maintained by [Synpulse](https://www.synpulse.com/en).
+If you would like to contribute to the project, please create an issue and submit a pull request. Our maintainers
+will review your pull request as soon as possible.
+
+## License
+
+See the [LICENSE](./LICENSE) file for licensing information.
