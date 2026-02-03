@@ -308,6 +308,10 @@ Adjust the `threshold` parameter based on your use case. Lower values return mor
 3. **Clear Strapi cache**: Delete `.cache` and `build` folders
 4. **Restart Strapi**: `npm run develop`
 
+## Screenshots
+
+For example configurations and request when using the plugin, please check the [screenshots](./screenshots/) folder.
+
 ## Contributing
 
 Thank you for your interest in contributing to the semantic search plugin! This plugin is created and maintained by [Synpulse](https://www.synpulse.com/en).
