@@ -1,5 +1,5 @@
 {
-  "version": "0.0.1",
+  "version": "0.0.2",
   "keywords": [],
   "type": "commonjs",
   "exports": {
@@ -66,5 +66,9 @@
   "name": "strapi-semantic-search",
   "description": "AI powered semantic search plugin for Strapi CMS",
   "license": "MIT",
-  "author": "Synpulse <jason.tsang@synpulse.com>"
+  "author": "Synpulse <jason.tsang@synpulse.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/synpulse8-opensource/pulse8-semantic-search-plugin-for-strapi.git"
+  }
 }
