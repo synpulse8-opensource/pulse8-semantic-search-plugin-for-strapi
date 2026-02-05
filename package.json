@@ -1,5 +1,5 @@
 {
-  "version": "1.0.1",
+  "version": "1.0.2",
   "keywords": [],
   "type": "commonjs",
   "exports": {
@@ -14,6 +14,13 @@
     "./strapi-server": {
       "types": "./dist/server/src/index.d.ts",
       "source": "./server/src/index.ts",
+      "import": "./dist/server/index.mjs",
+      "require": "./dist/server/index.js",
+      "default": "./dist/server/index.js"
+    },
+    "./documentation": {
+      "types": "./dist/server/src/documentation/index.d.ts",
+      "source": "./server/src/documentation/index.ts",
       "import": "./dist/server/index.mjs",
       "require": "./dist/server/index.js",
       "default": "./dist/server/index.js"
