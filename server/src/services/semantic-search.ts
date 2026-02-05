@@ -39,6 +39,25 @@ export interface ISearchOptions {
   domain?: string
 }
 
+// TODO: let user select fields to exclude from text extraction
+// Fields to exclude from text extraction (never include in searchable text)
+const EXCLUDED_FIELDS = new Set([
+  'id',
+  'documentId',
+  'meet',
+  'isExpert',
+  'isActive',
+  'isScheduleMeetEnable',
+  'scheduleMeetingLink',
+  'embedding',
+  'embeddingMetadata',
+  'createdAt',
+  'updatedAt',
+  'publishedAt',
+  'locale',
+  '__component'
+])
+
 export default ({ strapi }) => {
   let openaiClient: OpenAI | null = null
   let cachedApiKey: string | null = null
@@ -117,20 +136,22 @@ export default ({ strapi }) => {
       } else if (Array.isArray(value)) {
         for (const item of value) {
           if (typeof item === 'object' && item !== null) {
-            const textFields = ['editor', 'content', 'text', 'title', 'description', 'caption', 'body']
-            for (const tf of textFields) {
-              if ((item as any)[tf] && typeof (item as any)[tf] === 'string') {
-                textParts.push((item as any)[tf])
-              }
+            const obj = item as Record<string, unknown>
+            for (const k of Object.keys(obj)) {
+              if (EXCLUDED_FIELDS.has(k)) continue
+              const v = obj[k]
+              if (typeof v === 'string' && v.trim()) textParts.push(v)
             }
           }
         }
       } else if (typeof value === 'object' && value !== null) {
         const obj = value as Record<string, unknown>
-        if (obj.name) textParts.push(obj.name as string)
-        if (obj.title) textParts.push(obj.title as string)
-        if (obj.description) textParts.push(obj.description as string)
-        if (obj.metaDescription) textParts.push(obj.metaDescription as string)
+        // Include all string properties except excluded fields
+        for (const k of Object.keys(obj)) {
+          if (EXCLUDED_FIELDS.has(k)) continue
+          const v = obj[k]
+          if (typeof v === 'string' && v.trim()) textParts.push(v)
+        }
       }
     }
 
