@@ -39,7 +39,9 @@ async function handleContentChange(strapi: Core.Strapi, event: ILifecycleEvent, 
 
     if (embeddingResult) {
       await service.saveEmbedding(uid, result.documentId, result.locale || 'en', embeddingResult);
-      strapi.log.info(`[Semantic Search] Auto-generated embedding for ${uid}:${result.documentId} (${action})`);
+      strapi.log.info(
+        `[Semantic Search] Auto-generated embedding for ${uid}:${result.documentId} (${action})`
+      );
     }
   } catch (error) {
     strapi.log.error(`[Semantic Search] Error in handleContentChange: ${error}`);
@@ -53,6 +55,12 @@ async function handleContentDelete(strapi: Core.Strapi, event: ILifecycleEvent) 
   if (!result || !result.documentId) return;
 
   try {
+    // Only delete if this content type is configured
+    const settings = await strapi.plugin(PLUGIN_ID).service('settings').getSettings();
+    const contentTypes = settings.contentTypes || [];
+    const config = contentTypes.find((ct: IContentTypeConfig) => ct.contentType === uid);
+    if (!config) return;
+
     const service = strapi.plugin(PLUGIN_ID).service('semantic-search');
     await service.deleteEmbedding(uid, result.documentId, result.locale);
     strapi.log.info(`[Semantic Search] Deleted embedding for ${uid}:${result.documentId}`);
