@@ -2,6 +2,25 @@
 
 AI-powered semantic search for Strapi CMS using embedding models. Search your content by meaning, not just keywords.
 
+## Table of contents
+
+- [Features](#features)
+- [Notes](#notes)
+- [Installation](#installation)
+  - [From npm](#from-npm)
+  - [Local development](#local-development)
+- [Configuration](#configuration)
+  - [Settings tab](#settings-tab)
+  - [Collections tab](#collections-tab)
+  - [Stats tab](#stats-tab)
+- [API endpoints](#api-endpoints)
+- [Response format](#response-format)
+- [Similarity scores](#similarity-scores)
+- [Troubleshooting](#troubleshooting)
+- [Screenshots](#screenshots)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Features
 
 - **Semantic Search**: Find content based on meaning using AI embeddings
@@ -18,16 +37,15 @@ AI-powered semantic search for Strapi CMS using embedding models. Search your co
 
 ## Installation
 
-### From npm (Production)
+### From npm
 
 ```bash
-# To be updated
-npm install @your-org/strapi-semantic-search
+npm install strapi-semantic-search
 # or
-yarn add @your-org/strapi-semantic-search
+yarn add strapi-semantic-search
 ```
 
-### Local Development with yalc
+### Local Development
 
 For local plugin development, use [yalc](https://github.com/wclr/yalc) to link the plugin to your Strapi project.
 
@@ -52,6 +70,7 @@ npm run watch:link
 In your Strapi project directory:
 
 ```bash
+# required for local development
 npm install openai
 npx yalc add strapi-semantic-search && npx yalc link strapi-semantic-search && npx install
 ```
@@ -77,7 +96,7 @@ npm run develop
 
 ## Configuration
 
-Access the plugin settings at **Settings > Semantic Search** in the Strapi admin panel.
+Access the plugin settings at from the sidebar in the Strapi admin panel.
 
 ### Settings Tab
 
@@ -184,7 +203,7 @@ Content-Type: application/json
 }
 ```
 
-> **Note**: Regeneration runs asynchronously. The endpoint returns immediately with a "queued" status. Check the stats endpoint or admin panel to monitor progress.
+> **Note**: Regeneration runs asynchronously. The endpoint returns immediately with a "queued" status. Check the stats endpoint or tab to monitor progress.
 
 ### Delete Embeddings
 
