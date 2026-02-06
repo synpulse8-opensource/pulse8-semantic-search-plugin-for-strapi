@@ -4,6 +4,8 @@ import { PLUGIN_ID } from '../pluginId';
 export interface IContentTypeConfig {
   contentType: string;
   fields: string[];
+  embeddingFields: string[];
+  responseFields: string[];
 }
 
 export interface ISettings {
@@ -110,7 +112,7 @@ export default ({ strapi }) => ({
   async getApiSettingsForUI() {
     const settings = await this.getSettings();
     let maskedApiKey = '';
-    
+
     if (settings.encryptedApiKey) {
       try {
         const decryptedKey = decrypt(settings.encryptedApiKey);
@@ -143,8 +145,12 @@ export default ({ strapi }) => ({
 
     const updatedSettings: ISettings = {
       encryptedApiKey,
-      embeddingUrl: settings.embeddingUrl !== undefined ? settings.embeddingUrl : currentSettings.embeddingUrl,
-      embeddingModel: settings.embeddingModel !== undefined ? settings.embeddingModel : currentSettings.embeddingModel,
+      embeddingUrl:
+        settings.embeddingUrl !== undefined ? settings.embeddingUrl : currentSettings.embeddingUrl,
+      embeddingModel:
+        settings.embeddingModel !== undefined
+          ? settings.embeddingModel
+          : currentSettings.embeddingModel,
       autoGenerate: currentSettings.autoGenerate,
       contentTypes: currentSettings.contentTypes,
       searchLimit: currentSettings.searchLimit,

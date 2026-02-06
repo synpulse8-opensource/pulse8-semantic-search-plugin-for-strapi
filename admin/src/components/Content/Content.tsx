@@ -1,8 +1,17 @@
-import React from "react";
-import { Box, Button, Checkbox, Field, Flex, Grid, IconButton, Typography } from "@strapi/design-system";
-import { Table, Thead, Tbody, Tr, Th, Td } from "@strapi/design-system";
-import { Trash } from "@strapi/icons";
-import { usePluginSettings } from "../../hooks/usePluginSettings";
+import React from 'react';
+import {
+  Box,
+  Button,
+  Checkbox,
+  Field,
+  Flex,
+  Grid,
+  IconButton,
+  Typography,
+} from '@strapi/design-system';
+import { Table, Thead, Tbody, Tr, Th, Td } from '@strapi/design-system';
+import { Trash } from '@strapi/icons';
+import { usePluginSettings } from '../../hooks/usePluginSettings';
 
 interface IContentProps {
   pluginSettingsHook: ReturnType<typeof usePluginSettings>;
@@ -27,6 +36,8 @@ export const Content: React.FC<IContentProps> = ({ pluginSettingsHook }) => {
     removeContentType,
     updateContentType,
     updateFields,
+    updateEmbeddingFields,
+    updateResponseFields,
   } = pluginSettingsHook;
 
   return (
@@ -47,12 +58,24 @@ export const Content: React.FC<IContentProps> = ({ pluginSettingsHook }) => {
           Auto-generate embeddings on content create/update
         </Checkbox>
       </Box>
-      <Table colCount={3} rowCount={contentTypes.length + 1}>
+      <Table colCount={5} rowCount={contentTypes.length + 1}>
         <Thead>
           <Tr>
-            <Th><Typography variant="sigma">Content Type</Typography></Th>
-            <Th><Typography variant="sigma">Searchable fields (comma-separated)</Typography></Th>
-            <Th><Typography variant="sigma">Actions</Typography></Th>
+            <Th>
+              <Typography variant="sigma">Content Type</Typography>
+            </Th>
+            <Th>
+              <Typography variant="sigma">Searchable fields (comma-separated)</Typography>
+            </Th>
+            <Th>
+              <Typography variant="sigma">Embedding fields (comma-separated)</Typography>
+            </Th>
+            <Th>
+              <Typography variant="sigma">Response fields (comma-separated)</Typography>
+            </Th>
+            <Th>
+              <Typography variant="sigma">Actions</Typography>
+            </Th>
           </Tr>
         </Thead>
         <Tbody>
@@ -60,25 +83,59 @@ export const Content: React.FC<IContentProps> = ({ pluginSettingsHook }) => {
             contentTypes.map((ct, index) => (
               <Tr key={index}>
                 <Td>
-                  <Field.Root error={validationErrors[index]?.contentType} hint="The identifier of your colleciton, e.g. api::article.article">
+                  <Field.Root
+                    error={validationErrors[index]?.contentType}
+                    hint="Content-Type UID e.g. api::article.article"
+                  >
                     <Field.Input
                       value={ct.contentType}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateContentType(index, e.target.value)}
-                      placeholder="api::example.example"
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        updateContentType(index, e.target.value)
+                      }
+                      placeholder="api::article.article"
                     />
                     <Field.Hint />
                     <Field.Error />
                   </Field.Root>
                 </Td>
                 <Td>
-                  <Field.Root error={validationErrors[index]?.fields} hint="The fields you want to be searchable by the plugin">
+                  <Field.Root
+                    error={validationErrors[index]?.fields}
+                    hint="Top-level fields to extract text from"
+                  >
                     <Field.Input
                       value={ct.fieldsRaw || ''}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateFields(index, e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        updateFields(index, e.target.value)
+                      }
                       placeholder="title, description, content"
                     />
                     <Field.Hint />
                     <Field.Error />
+                  </Field.Root>
+                </Td>
+                <Td>
+                  <Field.Root hint="Sub-fields within nested objects/components">
+                    <Field.Input
+                      value={ct.embeddingFieldsRaw || ''}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        updateEmbeddingFields(index, e.target.value)
+                      }
+                      placeholder="Leave empty to include all"
+                    />
+                    <Field.Hint />
+                  </Field.Root>
+                </Td>
+                <Td>
+                  <Field.Root hint="Fields returned in search API response">
+                    <Field.Input
+                      value={ct.responseFieldsRaw || ''}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        updateResponseFields(index, e.target.value)
+                      }
+                      placeholder="Leave empty to include all"
+                    />
+                    <Field.Hint />
                   </Field.Root>
                 </Td>
                 <Td>
@@ -90,7 +147,7 @@ export const Content: React.FC<IContentProps> = ({ pluginSettingsHook }) => {
             ))
           ) : (
             <Tr>
-              <Td colSpan={3}>
+              <Td colSpan={5}>
                 <Box paddingTop={4} paddingBottom={4}>
                   <Typography variant="delta" textColor="neutral600">
                     No content types configured
@@ -113,7 +170,9 @@ export const Content: React.FC<IContentProps> = ({ pluginSettingsHook }) => {
                 <Field.Input
                   type="number"
                   value={searchLimit}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchLimit(Number(e.target.value))}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setSearchLimit(Number(e.target.value))
+                  }
                   placeholder="10"
                   min={1}
                   max={100}
@@ -128,7 +187,9 @@ export const Content: React.FC<IContentProps> = ({ pluginSettingsHook }) => {
                 <Field.Input
                   type="number"
                   value={searchThreshold}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchThreshold(Number(e.target.value))}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setSearchThreshold(Number(e.target.value))
+                  }
                   placeholder="0.3"
                   min={0}
                   max={1}
@@ -144,7 +205,9 @@ export const Content: React.FC<IContentProps> = ({ pluginSettingsHook }) => {
                 <Field.Input
                   type="text"
                   value={searchLocale}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchLocale(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setSearchLocale(e.target.value)
+                  }
                   placeholder="en"
                 />
               </Field.Root>
@@ -159,4 +222,4 @@ export const Content: React.FC<IContentProps> = ({ pluginSettingsHook }) => {
       </Flex>
     </Box>
   );
-}
+};

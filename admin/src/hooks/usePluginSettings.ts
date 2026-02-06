@@ -6,6 +6,10 @@ export interface IContentTypeConfig {
   contentType: string;
   fields: string[];
   fieldsRaw?: string;
+  embeddingFields: string[];
+  embeddingFieldsRaw?: string;
+  responseFields: string[];
+  responseFieldsRaw?: string;
 }
 
 export interface IPluginSettingsResponseDTO {
@@ -13,6 +17,8 @@ export interface IPluginSettingsResponseDTO {
   contentTypes: {
     contentType: string;
     fields: string[];
+    embeddingFields: string[];
+    responseFields: string[];
   }[];
   searchLimit: number;
   searchThreshold: number;
@@ -38,7 +44,12 @@ const areContentTypesEqual = (a: IContentTypeConfig[], b: IContentTypeConfig[]):
   if (a.length !== b.length) return false;
   return a.every((ct, index) => {
     const other = b[index];
-    return ct.contentType === other.contentType && ct.fieldsRaw === other.fieldsRaw;
+    return (
+      ct.contentType === other.contentType &&
+      ct.fieldsRaw === other.fieldsRaw &&
+      ct.embeddingFieldsRaw === other.embeddingFieldsRaw &&
+      ct.responseFieldsRaw === other.responseFieldsRaw
+    );
   });
 };
 
@@ -68,6 +79,10 @@ export const usePluginSettings = () => {
       const contentTypesWithRaw = loadedContentTypes.map((ct) => ({
         ...ct,
         fieldsRaw: ct.fields ? ct.fields.join(', ') : '',
+        embeddingFields: ct.embeddingFields || [],
+        embeddingFieldsRaw: ct.embeddingFields ? ct.embeddingFields.join(', ') : '',
+        responseFields: ct.responseFields || [],
+        responseFieldsRaw: ct.responseFields ? ct.responseFields.join(', ') : '',
       }));
       const loadedAutoGenerate = response.data.autoGenerate;
       const loadedSearchLimit = response.data.searchLimit;
@@ -103,6 +118,18 @@ export const usePluginSettings = () => {
               .map((f) => f.trim())
               .filter(Boolean)
           : ct.fields,
+        embeddingFields: ct.embeddingFieldsRaw
+          ? ct.embeddingFieldsRaw
+              .split(',')
+              .map((f) => f.trim())
+              .filter(Boolean)
+          : ct.embeddingFields,
+        responseFields: ct.responseFieldsRaw
+          ? ct.responseFieldsRaw
+              .split(',')
+              .map((f) => f.trim())
+              .filter(Boolean)
+          : ct.responseFields,
       }));
 
       const response = await post<IPluginSettingsResponseDTO>(
@@ -120,6 +147,10 @@ export const usePluginSettings = () => {
       const contentTypesWithRaw = savedContentTypes.map((ct) => ({
         ...ct,
         fieldsRaw: ct.fields ? ct.fields.join(', ') : '',
+        embeddingFields: ct.embeddingFields || [],
+        embeddingFieldsRaw: ct.embeddingFields ? ct.embeddingFields.join(', ') : '',
+        responseFields: ct.responseFields || [],
+        responseFieldsRaw: ct.responseFields ? ct.responseFields.join(', ') : '',
       }));
       const savedAutoGenerate = response.data.autoGenerate;
       const savedSearchLimit = response.data.searchLimit;
@@ -175,7 +206,18 @@ export const usePluginSettings = () => {
   };
 
   const addContentType = () => {
-    setContentTypes([...contentTypes, { contentType: '', fields: [], fieldsRaw: '' }]);
+    setContentTypes([
+      ...contentTypes,
+      {
+        contentType: '',
+        fields: [],
+        fieldsRaw: '',
+        embeddingFields: [],
+        embeddingFieldsRaw: '',
+        responseFields: [],
+        responseFieldsRaw: '',
+      },
+    ]);
   };
 
   const removeContentType = (index: number) => {
@@ -221,6 +263,18 @@ export const usePluginSettings = () => {
     }
   };
 
+  const updateEmbeddingFields = (index: number, value: string) => {
+    const updated = [...contentTypes];
+    updated[index].embeddingFieldsRaw = value;
+    setContentTypes(updated);
+  };
+
+  const updateResponseFields = (index: number, value: string) => {
+    const updated = [...contentTypes];
+    updated[index].responseFieldsRaw = value;
+    setContentTypes(updated);
+  };
+
   const isDirty =
     initialState !== null &&
     (autoGenerate !== initialState.autoGenerate ||
@@ -249,5 +303,7 @@ export const usePluginSettings = () => {
     removeContentType,
     updateContentType,
     updateFields,
+    updateEmbeddingFields,
+    updateResponseFields,
   };
 };

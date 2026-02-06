@@ -4,6 +4,8 @@ import { PLUGIN_ID } from './pluginId';
 interface IContentTypeConfig {
   contentType: string;
   fields: string[];
+  embeddingFields: string[];
+  responseFields: string[];
 }
 
 interface ILifecycleEvent {
@@ -35,7 +37,7 @@ async function handleContentChange(strapi: Core.Strapi, event: ILifecycleEvent, 
     if (!config) return;
 
     const service = strapi.plugin(PLUGIN_ID).service('semantic-search');
-    const embeddingResult = await service.generateEmbeddingForEntity(uid, result, config.fields);
+    const embeddingResult = await service.generateEmbeddingForEntity(uid, result, config.fields, config.embeddingFields || []);
 
     if (embeddingResult) {
       await service.saveEmbedding(uid, result.documentId, result.locale || 'en', embeddingResult);

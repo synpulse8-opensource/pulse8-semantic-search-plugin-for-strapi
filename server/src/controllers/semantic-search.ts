@@ -101,11 +101,12 @@ export default ({ strapi }) => ({
       const service = strapi.plugin(PLUGIN_ID).service('semantic-search')
       const contentTypes = await service.getContentTypes()
 
-      if (!contentTypes[contentType]) {
+      const ctConfig = contentTypes[contentType]
+      if (!ctConfig) {
         return ctx.badRequest(`Content type ${contentType} is not configured for semantic search`)
       }
 
-      const fields = contentTypes[contentType]
+      const { fields, embeddingFields } = ctConfig
 
       setImmediate(async () => {
         try {
@@ -122,7 +123,7 @@ export default ({ strapi }) => ({
 
           for (const entity of entities as any[]) {
             try {
-              const result = await service.generateEmbeddingForEntity(contentType, entity, fields)
+              const result = await service.generateEmbeddingForEntity(contentType, entity, fields, embeddingFields)
 
               if (!result) {
                 strapi.log.warn(`[Semantic Search] No embedding generated for ${entity.documentId}`)
