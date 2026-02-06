@@ -1,6 +1,6 @@
-import { useFetchClient } from "@strapi/strapi/admin";
-import { useEffect, useState } from "react";
-import { PLUGIN_ID } from "../pluginId";
+import { useFetchClient } from '@strapi/strapi/admin';
+import { useEffect, useState } from 'react';
+import { PLUGIN_API_PREFIX } from '../pluginId';
 
 export interface IContentTypeStats {
   total: number;
@@ -52,7 +52,7 @@ export const useStats = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await get<IStatsResponseDTO>(`/${PLUGIN_ID}/stats`);
+      const response = await get<IStatsResponseDTO>(`${PLUGIN_API_PREFIX}/stats`);
       if (response.data.success) {
         setStats(response.data.data || {});
       } else {
@@ -73,7 +73,7 @@ export const useStats = () => {
   const regenerateContentType = async (contentType: string) => {
     try {
       setRegeneratingContentType(contentType);
-      await post<IRegenerateResponseDTO>(`/${PLUGIN_ID}/regenerate`, {
+      await post<IRegenerateResponseDTO>(`${PLUGIN_API_PREFIX}/regenerate`, {
         contentType,
         locale: 'en',
       });
@@ -93,7 +93,7 @@ export const useStats = () => {
     try {
       setRegeneratingContentType('all');
       for (const contentType of contentTypes) {
-        await post<IRegenerateResponseDTO>(`/${PLUGIN_ID}/regenerate`, {
+        await post<IRegenerateResponseDTO>(`${PLUGIN_API_PREFIX}/regenerate`, {
           contentType,
           locale: 'en',
         });
@@ -110,7 +110,7 @@ export const useStats = () => {
   const deleteContentType = async (contentType: string) => {
     try {
       setDeletingContentType(contentType);
-      await post<IDeleteResponseDTO>(`/${PLUGIN_ID}/delete`, {
+      await post<IDeleteResponseDTO>(`${PLUGIN_API_PREFIX}/delete`, {
         contentType,
       });
       await loadStats();
@@ -129,7 +129,7 @@ export const useStats = () => {
     try {
       setDeletingContentType('all');
       for (const contentType of contentTypes) {
-        await post<IDeleteResponseDTO>(`/${PLUGIN_ID}/delete`, {
+        await post<IDeleteResponseDTO>(`${PLUGIN_API_PREFIX}/delete`, {
           contentType,
         });
       }

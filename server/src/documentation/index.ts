@@ -4,7 +4,7 @@
  */
 
 export const paths = {
-  '/semantic-search/stats': {
+  '/api/strapi-semantic-search/stats': {
     get: {
       tags: ['Semantic Search'],
       summary: 'Get embedding statistics',
@@ -47,7 +47,7 @@ export const paths = {
       security: [],
     },
   },
-  '/semantic-search/search': {
+  '/api/strapi-semantic-search/search': {
     post: {
       tags: ['Semantic Search'],
       summary: 'Search content semantically',
@@ -132,7 +132,7 @@ export const paths = {
       security: [],
     },
   },
-  '/semantic-search/multi-search': {
+  '/api/strapi-semantic-search/multi-search': {
     post: {
       tags: ['Semantic Search'],
       summary: 'Search across multiple content types',
@@ -206,7 +206,7 @@ export const paths = {
       security: [],
     },
   },
-  '/semantic-search/regenerate': {
+  '/api/strapi-semantic-search/regenerate': {
     post: {
       tags: ['Semantic Search'],
       summary: 'Regenerate embeddings',
@@ -270,7 +270,7 @@ export const paths = {
       security: [],
     },
   },
-  '/semantic-search/delete': {
+  '/api/strapi-semantic-search/delete': {
     post: {
       tags: ['Semantic Search'],
       summary: 'Delete embeddings for a content type',
@@ -330,7 +330,7 @@ export const paths = {
       security: [],
     },
   },
-  '/semantic-search/api-settings': {
+  '/api/strapi-semantic-search/api-settings': {
     get: {
       tags: ['Semantic Search'],
       summary: 'Get API settings',
@@ -409,7 +409,7 @@ export const paths = {
       security: [],
     },
   },
-  '/semantic-search/plugin-settings': {
+  '/api/strapi-semantic-search/plugin-settings': {
     get: {
       tags: ['Semantic Search'],
       summary: 'Get plugin settings',

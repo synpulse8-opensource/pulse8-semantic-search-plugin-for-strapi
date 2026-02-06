@@ -1,6 +1,6 @@
-import { useFetchClient, useNotification } from "@strapi/strapi/admin";
-import { useEffect, useState } from "react";
-import { PLUGIN_ID } from "../pluginId";
+import { useFetchClient, useNotification } from '@strapi/strapi/admin';
+import { useEffect, useState } from 'react';
+import { PLUGIN_API_PREFIX } from '../pluginId';
 
 export interface IContentTypeConfig {
   contentType: string;
@@ -47,8 +47,8 @@ export const usePluginSettings = () => {
   const { toggleNotification } = useNotification();
   const [contentTypes, setContentTypes] = useState<IContentTypeConfig[]>([]);
   const [autoGenerate, setAutoGenerate] = useState(false);
-  const [searchLimit, setSearchLimit] = useState<number|undefined>();
-  const [searchThreshold, setSearchThreshold] = useState<number|undefined>();
+  const [searchLimit, setSearchLimit] = useState<number | undefined>();
+  const [searchThreshold, setSearchThreshold] = useState<number | undefined>();
   const [searchLocale, setSearchLocale] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [validationErrors, setValidationErrors] = useState<IValidationErrors>({});
@@ -61,24 +61,26 @@ export const usePluginSettings = () => {
   const loadSettings = async () => {
     try {
       setIsLoading(true);
-      const response = await get<IPluginSettingsResponseDTO>(`/${PLUGIN_ID}/plugin-settings`);
+      const response = await get<IPluginSettingsResponseDTO>(
+        `${PLUGIN_API_PREFIX}/plugin-settings`
+      );
       const loadedContentTypes = response.data.contentTypes || [];
-      const contentTypesWithRaw = loadedContentTypes.map(ct => ({
+      const contentTypesWithRaw = loadedContentTypes.map((ct) => ({
         ...ct,
-        fieldsRaw: ct.fields ? ct.fields.join(', ') : ''
+        fieldsRaw: ct.fields ? ct.fields.join(', ') : '',
       }));
       const loadedAutoGenerate = response.data.autoGenerate;
       const loadedSearchLimit = response.data.searchLimit;
       const loadedSearchThreshold = response.data.searchThreshold;
       const loadedSearchLocale = response.data.searchLocale;
-      
+
       setContentTypes(contentTypesWithRaw);
       setAutoGenerate(loadedAutoGenerate);
       setSearchLimit(loadedSearchLimit);
       setSearchThreshold(loadedSearchThreshold);
       setSearchLocale(loadedSearchLocale);
       setInitialState({
-        contentTypes: contentTypesWithRaw.map(ct => ({ ...ct })),
+        contentTypes: contentTypesWithRaw.map((ct) => ({ ...ct })),
         autoGenerate: loadedAutoGenerate,
         searchLimit: loadedSearchLimit,
         searchThreshold: loadedSearchThreshold,
@@ -93,36 +95,44 @@ export const usePluginSettings = () => {
 
   const saveSettings = async () => {
     try {
-      const processedContentTypes = contentTypes.map(ct => ({
+      const processedContentTypes = contentTypes.map((ct) => ({
         contentType: ct.contentType,
-        fields: ct.fieldsRaw ? ct.fieldsRaw.split(',').map(f => f.trim()).filter(Boolean) : ct.fields
+        fields: ct.fieldsRaw
+          ? ct.fieldsRaw
+              .split(',')
+              .map((f) => f.trim())
+              .filter(Boolean)
+          : ct.fields,
       }));
 
-      const response = await post<IPluginSettingsResponseDTO>(`/${PLUGIN_ID}/plugin-settings`, {
-        autoGenerate,
-        contentTypes: processedContentTypes,
-        searchLimit,
-        searchThreshold,
-        searchLocale,
-      });
+      const response = await post<IPluginSettingsResponseDTO>(
+        `${PLUGIN_API_PREFIX}/plugin-settings`,
+        {
+          autoGenerate,
+          contentTypes: processedContentTypes,
+          searchLimit,
+          searchThreshold,
+          searchLocale,
+        }
+      );
 
       const savedContentTypes = response.data.contentTypes || [];
-      const contentTypesWithRaw = savedContentTypes.map(ct => ({
+      const contentTypesWithRaw = savedContentTypes.map((ct) => ({
         ...ct,
-        fieldsRaw: ct.fields ? ct.fields.join(', ') : ''
+        fieldsRaw: ct.fields ? ct.fields.join(', ') : '',
       }));
       const savedAutoGenerate = response.data.autoGenerate;
       const savedSearchLimit = response.data.searchLimit;
       const savedSearchThreshold = response.data.searchThreshold;
       const savedSearchLocale = response.data.searchLocale;
-      
+
       setContentTypes(contentTypesWithRaw);
       setAutoGenerate(savedAutoGenerate);
       setSearchLimit(savedSearchLimit);
       setSearchThreshold(savedSearchThreshold);
       setSearchLocale(savedSearchLocale);
       setInitialState({
-        contentTypes: contentTypesWithRaw.map(ct => ({ ...ct })),
+        contentTypes: contentTypesWithRaw.map((ct) => ({ ...ct })),
         autoGenerate: savedAutoGenerate,
         searchLimit: savedSearchLimit,
         searchThreshold: savedSearchThreshold,
@@ -171,9 +181,9 @@ export const usePluginSettings = () => {
   const removeContentType = (index: number) => {
     setContentTypes(contentTypes.filter((_, i) => i !== index));
     // Re-index validation errors
-    setValidationErrors(prev => {
+    setValidationErrors((prev) => {
       const newErrors: IValidationErrors = {};
-      Object.keys(prev).forEach(key => {
+      Object.keys(prev).forEach((key) => {
         const keyNum = parseInt(key);
         if (keyNum < index) {
           newErrors[keyNum] = prev[keyNum];
@@ -191,9 +201,9 @@ export const usePluginSettings = () => {
     setContentTypes(updated);
     // Clear validation error when user starts typing
     if (validationErrors[index]?.contentType) {
-      setValidationErrors(prev => ({
+      setValidationErrors((prev) => ({
         ...prev,
-        [index]: { ...prev[index], contentType: undefined }
+        [index]: { ...prev[index], contentType: undefined },
       }));
     }
   };
@@ -204,20 +214,20 @@ export const usePluginSettings = () => {
     setContentTypes(updated);
     // Clear validation error when user starts typing
     if (validationErrors[index]?.fields) {
-      setValidationErrors(prev => ({
+      setValidationErrors((prev) => ({
         ...prev,
-        [index]: { ...prev[index], fields: undefined }
+        [index]: { ...prev[index], fields: undefined },
       }));
     }
   };
 
-  const isDirty = initialState !== null && (
-    autoGenerate !== initialState.autoGenerate ||
-    searchLimit !== initialState.searchLimit ||
-    searchThreshold !== initialState.searchThreshold ||
-    searchLocale !== initialState.searchLocale ||
-    !areContentTypesEqual(contentTypes, initialState.contentTypes)
-  );
+  const isDirty =
+    initialState !== null &&
+    (autoGenerate !== initialState.autoGenerate ||
+      searchLimit !== initialState.searchLimit ||
+      searchThreshold !== initialState.searchThreshold ||
+      searchLocale !== initialState.searchLocale ||
+      !areContentTypesEqual(contentTypes, initialState.contentTypes));
 
   return {
     contentTypes,

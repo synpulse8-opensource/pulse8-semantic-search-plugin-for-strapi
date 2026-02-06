@@ -54,7 +54,7 @@ All endpoints are available under `/api/semantic-search/`. But the ones you will
 ### Search Single Content Type
 
 ```bash
-POST /api/semantic-search/search
+POST /api/strapi-semantic-search/search
 Content-Type: application/json
 
 {
@@ -69,7 +69,7 @@ Content-Type: application/json
 ### Search Multiple Content Types
 
 ```bash
-POST /api/semantic-search/multi-search
+POST /api/strapi-semantic-search/multi-search
 Content-Type: application/json
 
 {

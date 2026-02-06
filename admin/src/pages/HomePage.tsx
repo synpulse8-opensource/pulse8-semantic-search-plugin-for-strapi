@@ -1,21 +1,21 @@
 import { useFetchClient } from '@strapi/strapi/admin';
-import { PLUGIN_ID } from '../pluginId';
+import { PLUGIN_API_PREFIX } from '../pluginId';
 import {
   BackButton,
   Layouts,
   Page,
   private_AutoReloadOverlayBlockerProvider as AutoReloadOverlayBlockerProvider,
 } from '@strapi/strapi/admin';
-import { PluginTabs } from '../components/PluginTabs'
+import { PluginTabs } from '../components/PluginTabs';
 
 const HomePage = () => {
   const { post } = useFetchClient();
 
   const handleRegenerate = async () => {
     try {
-      const response = await post(`/${PLUGIN_ID}/regenerate`, {
+      const response = await post(`${PLUGIN_API_PREFIX}/regenerate`, {
         contentType: 'api::insight.insight', // placeholder content type
-        locale: 'en'
+        locale: 'en',
       });
       console.log('Regenerate embeddings response:', response.data);
     } catch (error) {

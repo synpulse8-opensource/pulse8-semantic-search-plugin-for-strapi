@@ -1,6 +1,6 @@
-import { useFetchClient, useNotification } from "@strapi/strapi/admin";
-import { useEffect, useState } from "react";
-import { PLUGIN_ID } from "../pluginId";
+import { useFetchClient, useNotification } from '@strapi/strapi/admin';
+import { useEffect, useState } from 'react';
+import { PLUGIN_API_PREFIX } from '../pluginId';
 
 export interface IApiSettingsResponseDTO {
   apiKey: string;
@@ -30,11 +30,11 @@ export const useApiSettings = () => {
   const loadSettings = async () => {
     try {
       setIsLoading(true);
-      const response = await get<IApiSettingsResponseDTO>(`/${PLUGIN_ID}/api-settings`);
+      const response = await get<IApiSettingsResponseDTO>(`${PLUGIN_API_PREFIX}/api-settings`);
       const loadedApiKey = response.data.apiKey || '';
       const loadedEmbeddingUrl = response.data.embeddingUrl || '';
       const loadedEmbeddingModel = response.data.embeddingModel || '';
-      
+
       setApiKey(loadedApiKey);
       setEmbeddingUrl(loadedEmbeddingUrl);
       setEmbeddingModel(loadedEmbeddingModel);
@@ -52,7 +52,7 @@ export const useApiSettings = () => {
 
   const saveSettings = async () => {
     try {
-      const response = await post<IApiSettingsResponseDTO>(`/${PLUGIN_ID}/api-settings`, {
+      const response = await post<IApiSettingsResponseDTO>(`${PLUGIN_API_PREFIX}/api-settings`, {
         apiKey,
         embeddingUrl,
         embeddingModel,
@@ -60,7 +60,7 @@ export const useApiSettings = () => {
       const savedApiKey = response.data.apiKey || '';
       const savedEmbeddingUrl = response.data.embeddingUrl || '';
       const savedEmbeddingModel = response.data.embeddingModel || '';
-      
+
       setApiKey(savedApiKey);
       setEmbeddingUrl(savedEmbeddingUrl);
       setEmbeddingModel(savedEmbeddingModel);
@@ -76,11 +76,11 @@ export const useApiSettings = () => {
     }
   };
 
-  const isDirty = initialState !== null && (
-    apiKey !== initialState.apiKey ||
-    embeddingUrl !== initialState.embeddingUrl ||
-    embeddingModel !== initialState.embeddingModel
-  );
+  const isDirty =
+    initialState !== null &&
+    (apiKey !== initialState.apiKey ||
+      embeddingUrl !== initialState.embeddingUrl ||
+      embeddingModel !== initialState.embeddingModel);
 
   return {
     apiKey,
