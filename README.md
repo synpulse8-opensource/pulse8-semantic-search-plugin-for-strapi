@@ -41,7 +41,32 @@ The plugin provide the following features:
 
 ## Configuration
 
-Head to the admin panel and use the UI to configure your embedding model connection details and the plugin settings. You can find the content type of the your content from the url, e.g. `http://localhost:1337/admin/content-manager/collection-types/api::article.article`. For more examples on configuration, check the [screenshots](./screenshots/) folder.
+Head to the admin panel and use the UI to configure your embedding model connection details and the plugin settings. For more examples on configuration, check the [screenshots](./screenshots/) folder.
+
+### Finding Content Types and Fields
+
+- **Content type UID**: You can find this from the URL in the admin panel, e.g. `http://localhost:1337/admin/content-manager/collection-types/api::article.article` means the UID is `api::article.article`.
+- **Available fields**: To see all available fields for your content types, you can use the Content-Type Builder API:
+  ```
+  GET /api/content-type-builder/content-types
+  ```
+  This returns the full schema for all content types, including their attributes (fields) and types. You can also view field names in the Content-Type Builder section of the Strapi admin panel.
+
+### Field Configuration
+
+Each content type has three field settings that control how text is extracted for embeddings and what data is returned in search results:
+
+| Setting               | Purpose                                                                                                                                                                                                                                                  | Example                      |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| **Searchable fields** | Top-level fields the plugin reads to build embedding text. These are the field names on your content type.                                                                                                                                               | `title, description, blocks` |
+| **Embedding fields**  | Sub-fields within nested objects, components, or dynamic zones. When a searchable field contains objects or arrays of objects, this controls which keys inside those objects are used for text extraction. Leave empty to include all string sub-fields. | `body, caption`              |
+| **Response fields**   | Fields returned in the search API response. Leave empty to return all fields. `id` and `documentId` are always included.                                                                                                                                 | `title, slug, publishedAt`   |
+
+**Example**: Suppose you have an `Article` content type with fields `title` (string), `slug` (string), `blocks` (dynamic zone with components that have `body` and `caption` sub-fields), and `publishedAt` (datetime).
+
+- **Searchable fields** = `title, blocks` -- the plugin reads the `title` string and iterates over the `blocks` array to extract text.
+- **Embedding fields** = `body` -- when processing each object in `blocks`, only the `body` sub-field is used (ignoring `__component`, `caption`, `id`, etc.). If left empty, all string sub-fields would be included.
+- **Response fields** = `title, slug, publishedAt` -- the search API only returns these fields (plus `id` and `documentId`). If left empty, all fields except internal embedding data are returned.
 
 ### Similarity Scores
 

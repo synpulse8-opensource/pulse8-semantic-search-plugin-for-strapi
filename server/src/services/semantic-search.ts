@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { PLUGIN_ID } from '../pluginId';
+import type { IContentTypeConfig } from './settings';
 
 // Plugin content type UID for storing embeddings
 const EMBEDDING_UID = `plugin::${PLUGIN_ID}.embedding`;
@@ -39,27 +40,7 @@ export interface ISearchOptions {
   domain?: string;
 }
 
-// TODO: let user select fields to exclude from text extraction
-// Fields to exclude from text extraction (never include in searchable text)
-const EXCLUDED_FIELDS = new Set([
-  'id',
-  'documentId',
-  'meet',
-  'isExpert',
-  'isActive',
-  'isScheduleMeetEnable',
-  'scheduleMeetingLink',
-  'embedding',
-  'embeddingMetadata',
-  'createdAt',
-  'updatedAt',
-  'publishedAt',
-  'locale',
-  '__component',
-]);
-
-// Fields to exclude from search response entities
-const EXCLUDED_ENTITY_FIELDS = new Set(['embedding', 'embeddingMetadata']);
+const ALWAYS_INCLUDED_RESPONSE_FIELDS = new Set(['id', 'documentId']);
 
 export default ({ strapi }) => {
   let openaiClient: OpenAI | null = null;
@@ -129,8 +110,13 @@ export default ({ strapi }) => {
     }
   };
 
-  const extractTextFromEntity = (entity: IContentEntity, fields: string[]): string => {
+  const extractTextFromEntity = (
+    entity: IContentEntity,
+    fields: string[],
+    embeddingFields: string[]
+  ): string => {
     const textParts: string[] = [];
+    const embeddingFieldSet = new Set(embeddingFields);
 
     for (const field of fields) {
       const value = entity[field];
@@ -143,7 +129,7 @@ export default ({ strapi }) => {
           if (typeof item === 'object' && item !== null) {
             const obj = item as Record<string, unknown>;
             for (const k of Object.keys(obj)) {
-              if (EXCLUDED_FIELDS.has(k)) continue;
+              if (embeddingFieldSet.size > 0 && !embeddingFieldSet.has(k)) continue;
               const v = obj[k];
               if (typeof v === 'string' && v.trim()) textParts.push(v);
             }
@@ -151,9 +137,8 @@ export default ({ strapi }) => {
         }
       } else if (typeof value === 'object' && value !== null) {
         const obj = value as Record<string, unknown>;
-        // Include all string properties except excluded fields
         for (const k of Object.keys(obj)) {
-          if (EXCLUDED_FIELDS.has(k)) continue;
+          if (embeddingFieldSet.size > 0 && !embeddingFieldSet.has(k)) continue;
           const v = obj[k];
           if (typeof v === 'string' && v.trim()) textParts.push(v);
         }
@@ -180,11 +165,18 @@ export default ({ strapi }) => {
     return magnitude === 0 ? 0 : dotProduct / magnitude;
   };
 
-  const stripExcludedEntityFields = (entity: IContentEntity): IContentEntity => {
-    const cleaned = { ...entity };
-    for (const field of EXCLUDED_ENTITY_FIELDS) {
-      delete cleaned[field];
+  const filterEntityFields = (entity: IContentEntity, responseFields: string[]): IContentEntity => {
+    if (responseFields.length > 0) {
+      const responseFieldSet = new Set(responseFields);
+      const filtered: Record<string, unknown> = {};
+      for (const key of Object.keys(entity)) {
+        if (responseFieldSet.has(key) || ALWAYS_INCLUDED_RESPONSE_FIELDS.has(key)) {
+          filtered[key] = entity[key];
+        }
+      }
+      return filtered as IContentEntity;
     }
+    const cleaned = { ...entity };
     return cleaned;
   };
 
@@ -198,7 +190,8 @@ export default ({ strapi }) => {
       }
 
       const contentTypes = await this.getContentTypes();
-      if (!contentTypes[contentType]) {
+      const ctConfig = contentTypes[contentType];
+      if (!ctConfig) {
         return {
           results: [],
           metadata: { error: `Content type ${contentType} is not configured for semantic search` },
@@ -240,7 +233,7 @@ export default ({ strapi }) => {
             // Apply domain filter if specified
             if (domain && entity.domain !== domain) continue;
             results.push({
-              ...stripExcludedEntityFields(entity),
+              ...filterEntityFields(entity, ctConfig.responseFields),
               similarityScore: embeddingRecord.similarityScore,
             });
           }
@@ -260,9 +253,10 @@ export default ({ strapi }) => {
     async generateEmbeddingForEntity(
       uid: string,
       entity: IContentEntity,
-      fields: string[]
+      fields: string[],
+      embeddingFields: string[] = []
     ): Promise<IEmbeddingResult | null> {
-      const text = extractTextFromEntity(entity, fields);
+      const text = extractTextFromEntity(entity, fields, embeddingFields);
       if (!text) return null;
 
       const embedding = await generateEmbedding(text);
@@ -380,11 +374,15 @@ export default ({ strapi }) => {
       return stats;
     },
 
-    async getContentTypes() {
+    async getContentTypes(): Promise<Record<string, IContentTypeConfig>> {
       const settings = await strapi.plugin(PLUGIN_ID).service('settings').getSettings();
-      const contentTypesMap = {};
+      const contentTypesMap: Record<string, IContentTypeConfig> = {};
       for (const config of settings.contentTypes || []) {
-        contentTypesMap[config.contentType] = config.fields;
+        contentTypesMap[config.contentType] = {
+          ...config,
+          embeddingFields: config.embeddingFields || [],
+          responseFields: config.responseFields || [],
+        };
       }
       return contentTypesMap;
     },
