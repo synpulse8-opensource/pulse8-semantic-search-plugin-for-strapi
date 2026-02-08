@@ -32,11 +32,16 @@ export interface IEmbeddingRecord {
   embeddingMetadata: IEmbeddingMetadata;
 }
 
+/** Strapi populate: '*' | ['relation1', 'relation2'] | { relation: { populate: [...] } } */
+export type StrapiPopulate = string | string[] | Record<string, unknown>;
+
 export interface ISearchOptions {
   limit?: number;
   threshold?: number;
   locale?: string;
   domain?: string;
+  /** Populate relations on returned entities. Same format as Strapi REST API (e.g. '*', ['author'], or deep object). */
+  populate?: StrapiPopulate;
 }
 
 // TODO: let user select fields to exclude from text extraction
@@ -190,7 +195,7 @@ export default ({ strapi }) => {
 
   return {
     async search(query: string, contentType: string, options: ISearchOptions = {}) {
-      const { limit = 10, threshold = 0.3, locale = 'en', domain } = options;
+      const { limit = 10, threshold = 0.3, locale = 'en', domain, populate } = options;
 
       const queryEmbedding = await generateEmbedding(query);
       if (!queryEmbedding) {
@@ -232,7 +237,7 @@ export default ({ strapi }) => {
             locale,
             status: 'published',
             filters: { documentId: embeddingRecord.contentDocumentId },
-            populate: '*',
+            populate: populate ?? '*',
           });
 
           if (entities && entities.length > 0) {

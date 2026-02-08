@@ -49,7 +49,7 @@ When searching you can configure the similarity score threshold which is a numbe
 
 ## API Endpoints
 
-All endpoints are available under `/api/semantic-search/`. But the ones you will have to use the most are the following two. See [this](/server/src/documentation/index.ts) for the full documentation.
+All endpoints are available under `/api/strapi-semantic-search/`. You can optionally pass **`populate`** in the request body to control which relations are loaded on results—same format as [Strapi's REST API](https://docs.strapi.io/dev-docs/api/rest/populate-select): `"*"` (all), `["author", "cover"]`, or a deep object. See [documentation](/server/src/documentation/index.ts) for the full OpenAPI spec.
 
 ### Search Single Content Type
 
@@ -62,7 +62,8 @@ Content-Type: application/json
   "contentType": "api::article.article",
   "limit": 10,
   "threshold": 0.3,
-  "locale": "en"
+  "locale": "en",
+  "populate": "*"
 }
 ```
 
@@ -77,7 +78,8 @@ Content-Type: application/json
   "contentTypes": ["api::article.article", "api::page.page"],
   "limit": 10,
   "threshold": 0.3,
-  "locale": "en"
+  "locale": "en",
+  "populate": ["author", "cover"]
 }
 ```
 

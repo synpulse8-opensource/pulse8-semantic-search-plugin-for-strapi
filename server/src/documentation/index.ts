@@ -74,6 +74,15 @@ export const paths = {
                 },
                 locale: { type: 'string', default: 'en', description: 'Content locale' },
                 domain: { type: 'string', description: 'Optional domain filter' },
+                populate: {
+                  description:
+                    'Populate relations on returned entities. Same as Strapi REST API: "*" (all), ["relation1","relation2"], or deep object e.g. { "author": true, "cover": { "populate": ["formats"] } }',
+                  oneOf: [
+                    { type: 'string', example: '*' },
+                    { type: 'array', items: { type: 'string' }, example: ['author', 'cover'] },
+                    { type: 'object', description: 'Deep populate object' },
+                  ],
+                },
               },
             },
             example: {
@@ -82,6 +91,7 @@ export const paths = {
               limit: 5,
               threshold: 0.3,
               locale: 'en',
+              populate: '*',
             },
           },
         },
@@ -165,12 +175,22 @@ export const paths = {
                 },
                 locale: { type: 'string', default: 'en', description: 'Content locale' },
                 domain: { type: 'string', description: 'Optional domain filter' },
+                populate: {
+                  description:
+                    'Populate relations on returned entities. Same as Strapi REST API: "*" (all), ["relation1","relation2"], or deep object.',
+                  oneOf: [
+                    { type: 'string', example: '*' },
+                    { type: 'array', items: { type: 'string' } },
+                    { type: 'object', description: 'Deep populate object' },
+                  ],
+                },
               },
             },
             example: {
               query: 'cloud computing',
               limit: 3,
               threshold: 0.3,
+              populate: '*',
             },
           },
         },
