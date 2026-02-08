@@ -2,7 +2,7 @@ import { PLUGIN_ID } from '../pluginId';
 
 export default ({ strapi }) => ({
     async search(ctx) {
-      const { query, contentType, limit, threshold, locale, domain } = ctx.request.body
+      const { query, contentType, limit, threshold, locale, domain, populate } = ctx.request.body
   
       if (!query) {
         return ctx.badRequest('Query is required')
@@ -26,6 +26,7 @@ export default ({ strapi }) => ({
           threshold: threshold ?? defaults.searchThreshold,
           locale: locale ?? defaults.searchLocale,
           domain,
+          populate,
         })
   
         return { success: true, data: results }
@@ -36,7 +37,7 @@ export default ({ strapi }) => ({
     },
   
     async multiSearch(ctx) {
-      const { query, contentTypes: requestedTypes, limit, threshold, locale, domain } = ctx.request.body
+      const { query, contentTypes: requestedTypes, limit, threshold, locale, domain, populate } = ctx.request.body
   
       if (!query) {
         return ctx.badRequest('Query is required')
@@ -57,6 +58,7 @@ export default ({ strapi }) => ({
             threshold: threshold ?? defaults.searchThreshold,
             locale: locale ?? defaults.searchLocale,
             domain,
+            populate,
           })
         }
   
