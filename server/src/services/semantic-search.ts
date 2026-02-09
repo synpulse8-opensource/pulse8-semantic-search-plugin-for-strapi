@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { PLUGIN_ID } from '../pluginId';
+import type { IContentTypeConfig } from './settings';
 
 // Plugin content type UID for storing embeddings
 const EMBEDDING_UID = `plugin::${PLUGIN_ID}.embedding`;
@@ -37,6 +38,7 @@ export interface ISearchOptions {
   threshold?: number;
   locale?: string;
   domain?: string;
+  populate?: string[];
 }
 
 // TODO: let user select fields to exclude from text extraction
@@ -188,9 +190,17 @@ export default ({ strapi }) => {
     return cleaned;
   };
 
+  const buildPopulate = (populateFields: string[]): Record<string, boolean> | '*' => {
+    if (populateFields.length === 0) return '*';
+    return populateFields.reduce<Record<string, boolean>>((acc, field) => {
+      acc[field] = true;
+      return acc;
+    }, {});
+  };
+
   return {
     async search(query: string, contentType: string, options: ISearchOptions = {}) {
-      const { limit = 10, threshold = 0.3, locale = 'en', domain } = options;
+      const { limit = 10, threshold = 0.3, locale = 'en', domain, populate } = options;
 
       const queryEmbedding = await generateEmbedding(query);
       if (!queryEmbedding) {
@@ -198,7 +208,8 @@ export default ({ strapi }) => {
       }
 
       const contentTypes = await this.getContentTypes();
-      if (!contentTypes[contentType]) {
+      const ctConfig = contentTypes[contentType];
+      if (!ctConfig) {
         return {
           results: [],
           metadata: { error: `Content type ${contentType} is not configured for semantic search` },
@@ -232,7 +243,7 @@ export default ({ strapi }) => {
             locale,
             status: 'published',
             filters: { documentId: embeddingRecord.contentDocumentId },
-            populate: '*',
+            populate: buildPopulate(populate ?? ctConfig.populateFields),
           });
 
           if (entities && entities.length > 0) {
@@ -380,13 +391,18 @@ export default ({ strapi }) => {
       return stats;
     },
 
-    async getContentTypes() {
+    async getContentTypes(): Promise<Record<string, IContentTypeConfig>> {
       const settings = await strapi.plugin(PLUGIN_ID).service('settings').getSettings();
-      const contentTypesMap = {};
+      const contentTypesMap: Record<string, IContentTypeConfig> = {};
       for (const config of settings.contentTypes || []) {
-        contentTypesMap[config.contentType] = config.fields;
+        contentTypesMap[config.contentType] = {
+          ...config,
+          populateFields: config.populateFields || [],
+        };
       }
       return contentTypesMap;
     },
+
+    buildPopulate,
   };
 };

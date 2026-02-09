@@ -74,6 +74,12 @@ export const paths = {
                 },
                 locale: { type: 'string', default: 'en', description: 'Content locale' },
                 domain: { type: 'string', description: 'Optional domain filter' },
+                populate: {
+                  type: 'array',
+                  items: { type: 'string' },
+                  description:
+                    'Override which relations/components/media to populate. Only accepts non-scalar fields (relations, components, dynamic zones, media). Scalar fields are always included. Omit to use the configured populateFields setting, or leave empty to populate all.',
+                },
               },
             },
             example: {
@@ -82,6 +88,7 @@ export const paths = {
               limit: 5,
               threshold: 0.3,
               locale: 'en',
+              populate: ['blocks', 'author'],
             },
           },
         },
@@ -165,12 +172,19 @@ export const paths = {
                 },
                 locale: { type: 'string', default: 'en', description: 'Content locale' },
                 domain: { type: 'string', description: 'Optional domain filter' },
+                populate: {
+                  type: 'array',
+                  items: { type: 'string' },
+                  description:
+                    'Override which relations/components/media to populate. Only accepts non-scalar fields. Omit to use the configured populateFields setting.',
+                },
               },
             },
             example: {
               query: 'cloud computing',
               limit: 3,
               threshold: 0.3,
+              populate: ['blocks'],
             },
           },
         },
