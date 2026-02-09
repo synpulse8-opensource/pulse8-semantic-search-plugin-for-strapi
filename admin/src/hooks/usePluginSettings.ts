@@ -6,6 +6,8 @@ export interface IContentTypeConfig {
   contentType: string;
   fields: string[];
   fieldsRaw?: string;
+  populateFields: string[];
+  populateFieldsRaw?: string;
 }
 
 export interface IPluginSettingsResponseDTO {
@@ -13,6 +15,7 @@ export interface IPluginSettingsResponseDTO {
   contentTypes: {
     contentType: string;
     fields: string[];
+    populateFields: string[];
   }[];
   searchLimit: number;
   searchThreshold: number;
@@ -38,7 +41,11 @@ const areContentTypesEqual = (a: IContentTypeConfig[], b: IContentTypeConfig[]):
   if (a.length !== b.length) return false;
   return a.every((ct, index) => {
     const other = b[index];
-    return ct.contentType === other.contentType && ct.fieldsRaw === other.fieldsRaw;
+    return (
+      ct.contentType === other.contentType &&
+      ct.fieldsRaw === other.fieldsRaw &&
+      ct.populateFieldsRaw === other.populateFieldsRaw
+    );
   });
 };
 
@@ -68,6 +75,8 @@ export const usePluginSettings = () => {
       const contentTypesWithRaw = loadedContentTypes.map((ct) => ({
         ...ct,
         fieldsRaw: ct.fields ? ct.fields.join(', ') : '',
+        populateFields: ct.populateFields || [],
+        populateFieldsRaw: ct.populateFields ? ct.populateFields.join(', ') : '',
       }));
       const loadedAutoGenerate = response.data.autoGenerate;
       const loadedSearchLimit = response.data.searchLimit;
@@ -97,12 +106,20 @@ export const usePluginSettings = () => {
     try {
       const processedContentTypes = contentTypes.map((ct) => ({
         contentType: ct.contentType,
-        fields: ct.fieldsRaw
-          ? ct.fieldsRaw
-              .split(',')
-              .map((f) => f.trim())
-              .filter(Boolean)
-          : ct.fields,
+        fields:
+          ct.fieldsRaw !== undefined
+            ? ct.fieldsRaw
+                .split(',')
+                .map((f) => f.trim())
+                .filter(Boolean)
+            : ct.fields,
+        populateFields:
+          ct.populateFieldsRaw !== undefined
+            ? ct.populateFieldsRaw
+                .split(',')
+                .map((f) => f.trim())
+                .filter(Boolean)
+            : ct.populateFields,
       }));
 
       const response = await post<IPluginSettingsResponseDTO>(
@@ -120,6 +137,8 @@ export const usePluginSettings = () => {
       const contentTypesWithRaw = savedContentTypes.map((ct) => ({
         ...ct,
         fieldsRaw: ct.fields ? ct.fields.join(', ') : '',
+        populateFields: ct.populateFields || [],
+        populateFieldsRaw: ct.populateFields ? ct.populateFields.join(', ') : '',
       }));
       const savedAutoGenerate = response.data.autoGenerate;
       const savedSearchLimit = response.data.searchLimit;
@@ -175,7 +194,10 @@ export const usePluginSettings = () => {
   };
 
   const addContentType = () => {
-    setContentTypes([...contentTypes, { contentType: '', fields: [], fieldsRaw: '' }]);
+    setContentTypes([
+      ...contentTypes,
+      { contentType: '', fields: [], fieldsRaw: '', populateFields: [], populateFieldsRaw: '' },
+    ]);
   };
 
   const removeContentType = (index: number) => {
@@ -221,6 +243,12 @@ export const usePluginSettings = () => {
     }
   };
 
+  const updatePopulateFields = (index: number, value: string) => {
+    const updated = [...contentTypes];
+    updated[index].populateFieldsRaw = value;
+    setContentTypes(updated);
+  };
+
   const isDirty =
     initialState !== null &&
     (autoGenerate !== initialState.autoGenerate ||
@@ -249,5 +277,6 @@ export const usePluginSettings = () => {
     removeContentType,
     updateContentType,
     updateFields,
+    updatePopulateFields,
   };
 };

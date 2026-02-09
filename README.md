@@ -43,6 +43,17 @@ The plugin provide the following features:
 
 Head to the admin panel and use the UI to configure your embedding model connection details and the plugin settings. You can find the content type of the your content from the url, e.g. `http://localhost:1337/admin/content-manager/collection-types/api::article.article`. For more examples on configuration, check the [screenshots](./screenshots/) folder.
 
+### Field Configuration
+
+Each content type has the following configurable fields:
+
+| Setting               | Purpose                                                                                                                                                                                                                                     | Example                      |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| **Searchable fields** | Top-level fields the plugin reads to build embedding text.                                                                                                                                                                                  | `title, description, blocks` |
+| **Populate fields**   | Relations, components, dynamic zones, or media fields to load from the database. Scalar fields (strings, numbers, booleans, dates) are always included automatically and should **not** be listed here. Leave empty to populate all fields. | `blocks, author, coverImage` |
+
+> **Important**: The `populateFields` setting only accepts relation, component, dynamic zone, and media field names. Scalar fields like `title`, `description`, `slug`, etc. are always returned by Strapi and do not need to be populated. Adding a scalar field to `populateFields` will cause a validation error.
+
 ### Similarity Scores
 
 When searching you can configure the similarity score threshold which is a number 0-1 that indicates how relevant the content is to the query. Lower values return more results but may include less relevant content. In practice, we found that for searching in longer pieces of text 0.25 - 0.3 indicates that the article is relevant.

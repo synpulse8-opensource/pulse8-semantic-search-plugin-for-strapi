@@ -4,6 +4,7 @@ import { PLUGIN_ID } from '../pluginId';
 export interface IContentTypeConfig {
   contentType: string;
   fields: string[];
+  populateFields: string[];
 }
 
 export interface ISettings {
