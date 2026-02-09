@@ -52,7 +52,7 @@ Each content type has the following configurable fields:
 | **Searchable fields** | Top-level fields the plugin reads to build embedding text.                                                                                                                                                                                  | `title, description, blocks` |
 | **Populate fields**   | Relations, components, dynamic zones, or media fields to load from the database. Scalar fields (strings, numbers, booleans, dates) are always included automatically and should **not** be listed here. Leave empty to populate all fields. | `blocks, author, coverImage` |
 
-> **Important**: The `populateFields` setting only accepts relation, component, dynamic zone, and media field names. Scalar fields like `title`, `description`, `slug`, etc. are always returned by Strapi and do not need to be populated. Adding a scalar field to `populateFields` will cause a validation error.
+> **Important**: The `populateFields` setting only accepts relation, component, dynamic zone, and media field names. Scalar fields like `title`, `description`, `slug`, etc. are always returned by Strapi and do not need to be populated. Adding a scalar field to `populateFields` will cause a validation error. See [Strapi's REST API](https://docs.strapi.io/dev-docs/api/rest/populate-select) for more details.
 
 ### Similarity Scores
 
@@ -60,7 +60,7 @@ When searching you can configure the similarity score threshold which is a numbe
 
 ## API Endpoints
 
-All endpoints are available under `/api/semantic-search/`. But the ones you will have to use the most are the following two. See [this](/server/src/documentation/index.ts) for the full documentation.
+All endpoints are available under `/api/strapi-semantic-search/`. You can optionally pass **`populate`** in the request body to control which relations are loaded on results—same format as [Strapi's REST API](https://docs.strapi.io/dev-docs/api/rest/populate-select): `"*"` (all), `["author", "cover"]`, or a deep object. See [documentation](/server/src/documentation/index.ts) for the full OpenAPI spec.
 
 ### Search Single Content Type
 
@@ -73,7 +73,8 @@ Content-Type: application/json
   "contentType": "api::article.article",
   "limit": 10,
   "threshold": 0.3,
-  "locale": "en"
+  "locale": "en",
+  "populate": ["author"]
 }
 ```
 
@@ -89,6 +90,7 @@ Content-Type: application/json
   "limit": 10,
   "threshold": 0.3,
   "locale": "en"
+  "populate": ["author"]
 }
 ```
 
