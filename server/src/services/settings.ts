@@ -1,10 +1,14 @@
 import crypto from 'crypto';
 import { PLUGIN_ID } from '../pluginId';
+import { MAX_POPULATE_DEPTH } from './semantic-search';
 
 export interface IContentTypeConfig {
   contentType: string;
   fields: string[];
   populateFields: string[];
+  // Levels of nested content (components/relations/dynamic zones) to populate
+  // when generating embeddings. Takes precedence over populateFields when set.
+  populateDepth?: number;
 }
 
 export interface ISettings {
@@ -183,7 +187,13 @@ export default ({ strapi }) => ({
       embeddingUrl: currentSettings.embeddingUrl,
       embeddingModel: currentSettings.embeddingModel,
       autoGenerate: settings.autoGenerate ?? currentSettings.autoGenerate,
-      contentTypes: settings.contentTypes ?? currentSettings.contentTypes,
+      contentTypes: (settings.contentTypes ?? currentSettings.contentTypes).map((ct) => ({
+        ...ct,
+        populateDepth:
+          Number.isInteger(ct.populateDepth) && (ct.populateDepth as number) >= 1
+            ? Math.min(ct.populateDepth as number, MAX_POPULATE_DEPTH)
+            : undefined,
+      })),
       searchLimit: settings.searchLimit ?? currentSettings.searchLimit,
       searchThreshold: settings.searchThreshold ?? currentSettings.searchThreshold,
       searchLocale: settings.searchLocale ?? currentSettings.searchLocale,
