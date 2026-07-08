@@ -8,6 +8,7 @@ export interface IContentTypeConfig {
   fieldsRaw?: string;
   populateFields: string[];
   populateFieldsRaw?: string;
+  populateDepth?: number;
 }
 
 export interface IPluginSettingsResponseDTO {
@@ -16,6 +17,7 @@ export interface IPluginSettingsResponseDTO {
     contentType: string;
     fields: string[];
     populateFields: string[];
+    populateDepth?: number;
   }[];
   searchLimit: number;
   searchThreshold: number;
@@ -44,7 +46,8 @@ const areContentTypesEqual = (a: IContentTypeConfig[], b: IContentTypeConfig[]):
     return (
       ct.contentType === other.contentType &&
       ct.fieldsRaw === other.fieldsRaw &&
-      ct.populateFieldsRaw === other.populateFieldsRaw
+      ct.populateFieldsRaw === other.populateFieldsRaw &&
+      ct.populateDepth === other.populateDepth
     );
   });
 };
@@ -120,6 +123,7 @@ export const usePluginSettings = () => {
                 .map((f) => f.trim())
                 .filter(Boolean)
             : ct.populateFields,
+        populateDepth: ct.populateDepth,
       }));
 
       const response = await post<IPluginSettingsResponseDTO>(
@@ -196,7 +200,14 @@ export const usePluginSettings = () => {
   const addContentType = () => {
     setContentTypes([
       ...contentTypes,
-      { contentType: '', fields: [], fieldsRaw: '', populateFields: [], populateFieldsRaw: '' },
+      {
+        contentType: '',
+        fields: [],
+        fieldsRaw: '',
+        populateFields: [],
+        populateFieldsRaw: '',
+        populateDepth: undefined,
+      },
     ]);
   };
 
@@ -249,6 +260,12 @@ export const usePluginSettings = () => {
     setContentTypes(updated);
   };
 
+  const updatePopulateDepth = (index: number, value: number | undefined) => {
+    const updated = [...contentTypes];
+    updated[index].populateDepth = value;
+    setContentTypes(updated);
+  };
+
   const isDirty =
     initialState !== null &&
     (autoGenerate !== initialState.autoGenerate ||
@@ -278,5 +295,6 @@ export const usePluginSettings = () => {
     updateContentType,
     updateFields,
     updatePopulateFields,
+    updatePopulateDepth,
   };
 };

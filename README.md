@@ -51,6 +51,7 @@ Each content type has the following configurable fields:
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
 | **Searchable fields** | Top-level fields the plugin reads to build embedding text.                                                                                                                                                                                  | `title, description, blocks` |
 | **Populate fields**   | Relations, components, dynamic zones, or media fields to load from the database. Scalar fields (strings, numbers, booleans, dates) are always included automatically and should **not** be listed here. Leave empty to populate all fields. | `blocks, author, coverImage` |
+| **Populate depth**    | Number of levels of nested components/dynamic zones to load when generating embeddings, so deeply nested text is included. Relations and media are loaded one level only. Overrides **Populate fields** when set. Max 10.                   | `5`                          |
 
 > **Important**: The `populateFields` setting only accepts relation, component, dynamic zone, and media field names. Scalar fields like `title`, `description`, `slug`, etc. are always returned by Strapi and do not need to be populated. Adding a scalar field to `populateFields` will cause a validation error. See [Strapi's REST API](https://docs.strapi.io/dev-docs/api/rest/populate-select) for more details.
 
@@ -60,7 +61,7 @@ When searching you can configure the similarity score threshold which is a numbe
 
 ## API Endpoints
 
-All endpoints are available under `/api/strapi-semantic-search/`. You can optionally pass **`populate`** in the request body to control which relations are loaded on results—same format as [Strapi's REST API](https://docs.strapi.io/dev-docs/api/rest/populate-select): `"*"` (all), `["author", "cover"]`, or a deep object. See [documentation](/server/src/documentation/index.ts) for the full OpenAPI spec.
+All endpoints are available under `/api/strapi-semantic-search/`. You can optionally pass **`populate`** in the request body to control which relations are loaded on results—same format as [Strapi's REST API](https://docs.strapi.io/dev-docs/api/rest/populate-select): `"*"` (all), `["author", "cover"]`, or a deep object. Alternatively, pass **`depth`** (in the request body or as a query parameter, e.g. `?depth=5`) to populate that many levels of nested components and dynamic zones (using Strapi's `on` syntax), automatically derived from your content type schema; relations and media are populated one level only. `populate` takes precedence over `depth`; max depth is 10. See [documentation](/server/src/documentation/index.ts) for the full OpenAPI spec.
 
 ### Search Single Content Type
 
@@ -74,7 +75,7 @@ Content-Type: application/json
   "limit": 10,
   "threshold": 0.3,
   "locale": "en",
-  "populate": ["author"]
+  "depth": 5
 }
 ```
 

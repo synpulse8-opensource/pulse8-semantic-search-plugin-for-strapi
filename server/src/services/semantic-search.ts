@@ -39,7 +39,11 @@ export interface ISearchOptions {
   locale?: string;
   domain?: string;
   populate?: string[];
+  depth?: number;
 }
+
+// Maximum populate depth to keep generated populate queries bounded
+export const MAX_POPULATE_DEPTH = 10;
 
 // TODO: let user select fields to exclude from text extraction
 // Fields to exclude from text extraction (never include in searchable text)
@@ -58,6 +62,15 @@ const EXCLUDED_FIELDS = new Set([
   'publishedAt',
   'locale',
   '__component',
+  // Media/file technical fields (noise when populating deeply)
+  'url',
+  'previewUrl',
+  'formats',
+  'hash',
+  'ext',
+  'mime',
+  'provider',
+  'provider_metadata',
 ]);
 
 // Fields to exclude from search response entities
@@ -131,35 +144,28 @@ export default ({ strapi }) => {
     }
   };
 
+  const collectText = (value: unknown, textParts: string[]): void => {
+    if (!value) return;
+
+    if (typeof value === 'string') {
+      if (value.trim()) textParts.push(value);
+    } else if (Array.isArray(value)) {
+      for (const item of value) {
+        collectText(item, textParts);
+      }
+    } else if (typeof value === 'object') {
+      for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+        if (EXCLUDED_FIELDS.has(k)) continue;
+        collectText(v, textParts);
+      }
+    }
+  };
+
   const extractTextFromEntity = (entity: IContentEntity, fields: string[]): string => {
     const textParts: string[] = [];
 
     for (const field of fields) {
-      const value = entity[field];
-      if (!value) continue;
-
-      if (typeof value === 'string') {
-        textParts.push(value);
-      } else if (Array.isArray(value)) {
-        for (const item of value) {
-          if (typeof item === 'object' && item !== null) {
-            const obj = item as Record<string, unknown>;
-            for (const k of Object.keys(obj)) {
-              if (EXCLUDED_FIELDS.has(k)) continue;
-              const v = obj[k];
-              if (typeof v === 'string' && v.trim()) textParts.push(v);
-            }
-          }
-        }
-      } else if (typeof value === 'object' && value !== null) {
-        const obj = value as Record<string, unknown>;
-        // Include all string properties except excluded fields
-        for (const k of Object.keys(obj)) {
-          if (EXCLUDED_FIELDS.has(k)) continue;
-          const v = obj[k];
-          if (typeof v === 'string' && v.trim()) textParts.push(v);
-        }
-      }
+      collectText(entity[field], textParts);
     }
 
     return textParts.join(' ').trim();
@@ -198,9 +204,96 @@ export default ({ strapi }) => {
     }, {});
   };
 
+  // Build a nested populate query from the content type schema, `depth` levels deep.
+  // depth=1 is equivalent to populate '*' (one level). Dynamic zones use the `on`
+  // syntax so each component's own nested components get populated too, e.g.
+  // populate[section][on][about-us.company-profile][populate][locations][populate]=*
+  // Only components and dynamic zones are recursed into; relations and media are
+  // populated one level only — relation graphs are cyclic and recursing into them
+  // multiplies the loaded data per level (OOM risk on large datasets).
+  //
+  // `ancestors` stops components that (directly or indirectly) contain themselves
+  // from being re-expanded, and `budget` caps the total populate node count —
+  // without these, cyclic or heavily shared component schemas make the populate
+  // tree grow exponentially with depth, blocking the event loop while it builds.
+  const MAX_POPULATE_NODES = 5000;
+
+  const buildDeepPopulateInner = (
+    uid: string,
+    depth: number,
+    ancestors: Set<string>,
+    budget: { remaining: number }
+  ): Record<string, unknown> | '*' => {
+    const cappedDepth = Math.min(Math.max(Math.floor(depth), 1), MAX_POPULATE_DEPTH);
+    // Negated comparison so a non-numeric depth (NaN) also falls back to '*'
+    if (!(cappedDepth > 1)) return '*';
+
+    const model = strapi.getModel(uid);
+    if (!model) return '*';
+
+    const expandChild = (childUid: string): Record<string, unknown> | '*' => {
+      if (ancestors.has(childUid) || budget.remaining <= 0) return '*';
+      const childAncestors = new Set(ancestors);
+      childAncestors.add(childUid);
+      return buildDeepPopulateInner(childUid, cappedDepth - 1, childAncestors, budget);
+    };
+
+    const populate: Record<string, unknown> = {};
+    for (const [name, attribute] of Object.entries(model.attributes as Record<string, any>)) {
+      switch (attribute.type) {
+        case 'component':
+          budget.remaining--;
+          populate[name] = { populate: expandChild(attribute.component) };
+          break;
+        case 'dynamiczone': {
+          const on: Record<string, unknown> = {};
+          for (const component of attribute.components ?? []) {
+            budget.remaining--;
+            on[component] = { populate: expandChild(component) };
+          }
+          populate[name] = { on };
+          break;
+        }
+        case 'relation':
+        case 'media':
+          budget.remaining--;
+          populate[name] = true;
+          break;
+        default:
+          break;
+      }
+    }
+
+    return Object.keys(populate).length > 0 ? populate : '*';
+  };
+
+  const buildDeepPopulate = (uid: string, depth: number): Record<string, unknown> | '*' => {
+    const budget = { remaining: MAX_POPULATE_NODES };
+    const result = buildDeepPopulateInner(uid, depth, new Set([uid]), budget);
+    if (budget.remaining <= 0) {
+      strapi.log.warn(
+        `[Semantic Search] Populate tree for ${uid} at depth ${depth} exceeded ${MAX_POPULATE_NODES} nodes and was truncated. Consider lowering the populate depth.`
+      );
+    }
+    return result;
+  };
+
+  // Priority: explicit populate list > explicit depth > configured depth > configured fields
+  const resolvePopulate = (
+    contentType: string,
+    ctConfig: IContentTypeConfig,
+    populate?: string[],
+    depth?: number
+  ): Record<string, unknown> | '*' => {
+    if (populate !== undefined) return buildPopulate(populate);
+    if (depth) return buildDeepPopulate(contentType, depth);
+    if (ctConfig.populateDepth) return buildDeepPopulate(contentType, ctConfig.populateDepth);
+    return buildPopulate(ctConfig.populateFields);
+  };
+
   return {
     async search(query: string, contentType: string, options: ISearchOptions = {}) {
-      const { limit = 10, threshold = 0.3, locale = 'en', domain, populate } = options;
+      const { limit = 10, threshold = 0.3, locale = 'en', domain, populate, depth } = options;
 
       const queryEmbedding = await generateEmbedding(query);
       if (!queryEmbedding) {
@@ -243,7 +336,7 @@ export default ({ strapi }) => {
             locale,
             status: 'published',
             filters: { documentId: embeddingRecord.contentDocumentId },
-            populate: buildPopulate(populate ?? ctConfig.populateFields),
+            populate: resolvePopulate(contentType, ctConfig, populate, depth),
           });
 
           if (entities && entities.length > 0) {
@@ -404,5 +497,7 @@ export default ({ strapi }) => {
     },
 
     buildPopulate,
+    buildDeepPopulate,
+    resolvePopulate,
   };
 };

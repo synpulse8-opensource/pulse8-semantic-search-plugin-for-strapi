@@ -37,6 +37,7 @@ export const Content: React.FC<IContentProps> = ({ pluginSettingsHook }) => {
     updateContentType,
     updateFields,
     updatePopulateFields,
+    updatePopulateDepth,
   } = pluginSettingsHook;
 
   return (
@@ -57,7 +58,7 @@ export const Content: React.FC<IContentProps> = ({ pluginSettingsHook }) => {
           Auto-generate embeddings on content create/update
         </Checkbox>
       </Box>
-      <Table colCount={4} rowCount={contentTypes.length + 1}>
+      <Table colCount={5} rowCount={contentTypes.length + 1}>
         <Thead>
           <Tr>
             <Th>
@@ -68,6 +69,9 @@ export const Content: React.FC<IContentProps> = ({ pluginSettingsHook }) => {
             </Th>
             <Th>
               <Typography variant="sigma">Populate fields (comma-separated)</Typography>
+            </Th>
+            <Th>
+              <Typography variant="sigma">Populate depth</Typography>
             </Th>
             <Th>
               <Typography variant="sigma">Actions</Typography>
@@ -123,6 +127,24 @@ export const Content: React.FC<IContentProps> = ({ pluginSettingsHook }) => {
                   </Field.Root>
                 </Td>
                 <Td>
+                  <Field.Root hint="Levels of nested content to embed. Overrides populate fields.">
+                    <Field.Input
+                      type="number"
+                      value={ct.populateDepth ?? ''}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        updatePopulateDepth(
+                          index,
+                          e.target.value === '' ? undefined : Number(e.target.value)
+                        )
+                      }
+                      placeholder="e.g. 5"
+                      min={1}
+                      max={10}
+                    />
+                    <Field.Hint />
+                  </Field.Root>
+                </Td>
+                <Td>
                   <IconButton onClick={() => removeContentType(index)} label="Delete">
                     <Trash />
                   </IconButton>
@@ -131,7 +153,7 @@ export const Content: React.FC<IContentProps> = ({ pluginSettingsHook }) => {
             ))
           ) : (
             <Tr>
-              <Td colSpan={4}>
+              <Td colSpan={5}>
                 <Box paddingTop={4} paddingBottom={4}>
                   <Typography variant="delta" textColor="neutral600">
                     No content types configured

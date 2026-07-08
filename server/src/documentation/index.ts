@@ -80,6 +80,13 @@ export const paths = {
                   description:
                     'Override which relations/components/media to populate. Only accepts non-scalar fields (relations, components, dynamic zones, media). Scalar fields are always included. Omit to use the configured populateFields setting, or leave empty to populate all.',
                 },
+                depth: {
+                  type: 'integer',
+                  minimum: 1,
+                  maximum: 10,
+                  description:
+                    'Number of levels of nested components/dynamic zones to populate in results. Relations and media are populated one level only. Ignored when populate is provided. Can also be passed as a query parameter.',
+                },
               },
             },
             example: {
@@ -177,6 +184,13 @@ export const paths = {
                   items: { type: 'string' },
                   description:
                     'Override which relations/components/media to populate. Only accepts non-scalar fields. Omit to use the configured populateFields setting.',
+                },
+                depth: {
+                  type: 'integer',
+                  minimum: 1,
+                  maximum: 10,
+                  description:
+                    'Number of levels of nested components/dynamic zones to populate in results. Relations and media are populated one level only. Ignored when populate is provided. Can also be passed as a query parameter.',
                 },
               },
             },

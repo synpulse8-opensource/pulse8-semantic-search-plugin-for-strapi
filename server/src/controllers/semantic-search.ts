@@ -1,4 +1,16 @@
 import { PLUGIN_ID } from '../pluginId';
+import { MAX_POPULATE_DEPTH } from '../services/semantic-search';
+
+// Reads `depth` from the request body or query string. Returns undefined when
+// absent, null when invalid.
+const parseDepth = (ctx): number | undefined | null => {
+  const raw = ctx.request.body?.depth ?? ctx.request.query?.depth;
+  if (raw === undefined || raw === null || raw === '') return undefined;
+
+  const depth = Number(raw);
+  if (!Number.isInteger(depth) || depth < 1 || depth > MAX_POPULATE_DEPTH) return null;
+  return depth;
+};
 
 export default ({ strapi }) => ({
   async search(ctx) {
@@ -10,6 +22,11 @@ export default ({ strapi }) => ({
 
     if (!contentType) {
       return ctx.badRequest('Content type is required');
+    }
+
+    const depth = parseDepth(ctx);
+    if (depth === null) {
+      return ctx.badRequest(`Depth must be an integer between 1 and ${MAX_POPULATE_DEPTH}`);
     }
 
     const service = strapi.plugin(PLUGIN_ID).service('semantic-search');
@@ -27,6 +44,7 @@ export default ({ strapi }) => ({
         locale: locale ?? defaults.searchLocale,
         domain,
         populate,
+        depth,
       });
 
       return { success: true, data: results };
@@ -51,6 +69,11 @@ export default ({ strapi }) => ({
       return ctx.badRequest('Query is required');
     }
 
+    const depth = parseDepth(ctx);
+    if (depth === null) {
+      return ctx.badRequest(`Depth must be an integer between 1 and ${MAX_POPULATE_DEPTH}`);
+    }
+
     const service = strapi.plugin(PLUGIN_ID).service('semantic-search');
     const contentTypes = await service.getContentTypes();
     const typesToSearch = requestedTypes || Object.keys(contentTypes);
@@ -67,6 +90,7 @@ export default ({ strapi }) => ({
           locale: locale ?? defaults.searchLocale,
           domain,
           populate,
+          depth,
         });
       }
 
@@ -118,53 +142,89 @@ export default ({ strapi }) => ({
       return ctx.badRequest(`Content type ${contentType} is not configured for semantic search`);
     }
 
-    const { fields, populateFields } = ctConfig;
+    const { fields } = ctConfig;
+
+    // Page through shallow rows (no populate), then populate one entity at a
+    // time. Deep populate queries are heavy; loading entities in bulk with
+    // populate holds large graphs in memory and monopolizes the database
+    // connection, starving concurrent requests (e.g. the stats endpoint).
+    const BATCH_SIZE = 100;
 
     setImmediate(async () => {
       try {
-        const entities = await strapi.documents(contentType as any).findMany({
+        const populate = service.resolvePopulate(contentType, ctConfig);
+        const total = await strapi.documents(contentType as any).count({
           locale: entityLocale,
           status: 'published',
-          populate: service.buildPopulate(populateFields || []),
         });
 
         strapi.log.info(
-          `[Semantic Search] Starting regeneration for ${contentType} (${entities.length} entities)`
+          `[Semantic Search] Starting regeneration for ${contentType} (${total} entities)`
         );
 
         let processed = 0;
         let failed = 0;
+        let start = 0;
 
-        for (const entity of entities as any[]) {
-          try {
-            const result = await service.generateEmbeddingForEntity(contentType, entity, fields);
+        while (true) {
+          const batch = await strapi.documents(contentType as any).findMany({
+            locale: entityLocale,
+            status: 'published',
+            start,
+            limit: BATCH_SIZE,
+          });
 
-            if (!result) {
-              strapi.log.warn(`[Semantic Search] No embedding generated for ${entity.documentId}`);
-              failed++;
-              continue;
-            }
+          if (!batch || batch.length === 0) break;
 
-            const saved = await service.saveEmbedding(
-              contentType,
-              entity.documentId,
-              entityLocale,
-              result
-            );
+          for (const { documentId } of batch as any[]) {
+            try {
+              const entity = await strapi.documents(contentType as any).findOne({
+                documentId,
+                locale: entityLocale,
+                status: 'published',
+                populate,
+              });
 
-            if (!saved) {
-              strapi.log.warn(
-                `[Semantic Search] Failed to save embedding for ${entity.documentId}`
+              if (!entity) {
+                strapi.log.warn(`[Semantic Search] Entity ${documentId} not found, skipping`);
+                failed++;
+                continue;
+              }
+
+              const result = await service.generateEmbeddingForEntity(contentType, entity, fields);
+
+              if (!result) {
+                strapi.log.warn(`[Semantic Search] No embedding generated for ${documentId}`);
+                failed++;
+                continue;
+              }
+
+              const saved = await service.saveEmbedding(
+                contentType,
+                documentId,
+                entityLocale,
+                result
               );
-              failed++;
-              continue;
-            }
 
-            processed++;
-          } catch (error) {
-            strapi.log.error(`[Semantic Search] Regenerate error for ${entity.id}: ${error}`);
-            failed++;
+              if (!saved) {
+                strapi.log.warn(`[Semantic Search] Failed to save embedding for ${documentId}`);
+                failed++;
+                continue;
+              }
+
+              processed++;
+            } catch (error) {
+              strapi.log.error(`[Semantic Search] Regenerate error for ${documentId}: ${error}`);
+              failed++;
+            }
           }
+
+          strapi.log.info(
+            `[Semantic Search] Regeneration progress for ${contentType}: ${processed + failed}/${total}`
+          );
+
+          if (batch.length < BATCH_SIZE) break;
+          start += BATCH_SIZE;
         }
 
         strapi.log.info(

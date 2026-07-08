@@ -5,6 +5,7 @@ interface IContentTypeConfig {
   contentType: string;
   fields: string[];
   populateFields: string[];
+  populateDepth?: number;
 }
 
 interface ILifecycleEvent {
@@ -36,7 +37,28 @@ async function handleContentChange(strapi: Core.Strapi, event: ILifecycleEvent, 
     if (!config) return;
 
     const service = strapi.plugin(PLUGIN_ID).service('semantic-search');
-    const embeddingResult = await service.generateEmbeddingForEntity(uid, result, config.fields);
+
+    // Lifecycle results are shallow; refetch with populate so nested content
+    // (components, dynamic zones, relations) is included in the embedding text
+    let entity = result;
+    try {
+      const fetched = await strapi.documents(uid as any).findOne({
+        documentId: result.documentId,
+        locale: result.locale,
+        status: result.publishedAt ? 'published' : 'draft',
+        populate: service.resolvePopulate(uid, {
+          ...config,
+          populateFields: config.populateFields || [],
+        }),
+      });
+      if (fetched) entity = fetched;
+    } catch (error) {
+      strapi.log.warn(
+        `[Semantic Search] Failed to refetch ${uid}:${result.documentId} with populate, using shallow entity: ${error}`
+      );
+    }
+
+    const embeddingResult = await service.generateEmbeddingForEntity(uid, entity, config.fields);
 
     if (embeddingResult) {
       await service.saveEmbedding(uid, result.documentId, result.locale || 'en', embeddingResult);
